@@ -8,46 +8,56 @@ local sub  = string.sub
 local len = string.len
 local find = string.find
 local type = type
+local setmetatable = setmetatable
 local read_body = ngx.req.read_body
 local get_post_args = ngx.req.get_post_args
 local var = ngx.var
 local log = ngx.log
 local WARN = ngx.WARN
-local upload_path = ngx.config.prefix() ..'files/'
+local prefix = ngx.config.prefix
+local now = ngx.now
 
-local _M = new_tab(0,1)
-local needle = 'filename="'
-local needle_len = len(needle)
-local name_pos = 18 -- 'form-data; name="':len()
+local _M = new_tab(0,3)
+_M.VERSION = '0.1.0'
+
+local mt = { __index = _M }
+function _M.new(self, path)
+    return setmetatable({path = path}, mt)
+end
 
 local function decode_disposition(self, data)
+    local needle = 'filename="'
+    local needle_len = len(needle)
+    local name_pos = 18 -- 'form-data; name="':len()
     local last_quote_pos = len(data) - 1
     local filename_pos = find(data, needle)
 
-    if not filename_pos then return sub(data,name_pos,last_quote_pos) end
+    if not filename_pos then 
+        return sub(data,name_pos,last_quote_pos) 
+    end
 
     local field = sub(data,name_pos,filename_pos - 4) 
     local name = sub(data,filename_pos + needle_len, last_quote_pos)
-
-    if name == '' then return end
-    local path = upload_path 
-    if self.get_path then
-        path, name = self.get_path(self, name, field)
+    if not name or name == '' then 
+        return 
     end
-
-    local filename = path .. name
+    
+    local path = self.path or prefix() ..'temp/'
+    local tmp_name = now()
+    local filename = path .. tmp_name
     local handler = open(filename, 'w+')
 
-    if not handler then log(nWARN, 'failed to open file ', filename) end
+    if not handler then 
+        log(WARN, 'failed to open file ', filename) 
+    end
 
-    return field, name, handler
+    return field, name, handler, tmp_name 
 end
 
 
 local function multipart(self)  
     local chunk_size = 8192
     local form,err = upload:new(chunk_size)
-
     if not form then
         log(WARN, 'failed to new upload: ', err)
         return 
@@ -56,7 +66,6 @@ local function multipart(self)
     local m = { files = {} }
     local files = {}
     local handler, key, value
-
     while true do
         local ctype, res, err = form:read()
 
@@ -69,9 +78,12 @@ local function multipart(self)
             local header, data = res[1], res[2]
 
             if header == 'Content-Disposition' then
-                key, value, handler = decode_disposition(self, data)
+                local tmp_name
+                key, value, handler, tmp_name = decode_disposition(self, data)
                 
-                if handler then files[key] = { name = value } end
+                if handler then 
+                    files[key] = { name = value, tmp_name = tmp_name } 
+                end
             end
 
             if handler and header == 'Content-Type' then 
@@ -126,7 +138,7 @@ local function multipart(self)
 end
 
 -- proses post based on content type
-function _M.get(self)
+function _M.read(self)
     local ctype = var.content_type
 
     if ctype and find(ctype, 'multipart') then
