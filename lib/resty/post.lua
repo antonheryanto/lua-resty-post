@@ -8,7 +8,6 @@ local sub  = string.sub
 local len = string.len
 local find = string.find
 local type = type
-local get_headers = ngx.req.get_headers
 local read_body = ngx.req.read_body
 local get_post_args = ngx.req.get_post_args
 local var = ngx.var
@@ -128,16 +127,15 @@ end
 
 -- proses post based on content type
 function _M.get(self)
-    local header = get_headers() or {}
-    local ctype = header['content-type']
+    local ctype = var.content_type
 
-    if ctype and ctype:find('multipart') then
+    if ctype and find(ctype, 'multipart') then
         return multipart(self)
     end
 
     read_body()
 
-    if ctype and ctype:find('json') then
+    if ctype and find(ctype, 'json') then
         local body = var.request_body
         return body and cjson.decode(body) or {}
     end
