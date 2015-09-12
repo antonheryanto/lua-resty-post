@@ -7,6 +7,8 @@ Table of Contents
 =================
 * [Status](#status)
 * [Description](#description)
+* [Installation](#installation)
+* [How to use](#how-to-use)
 * [Copyright and License](#copyright-and-license)
 * [See Also](#see-also)
 
@@ -24,6 +26,26 @@ This library processed HTTP using [lua-resty-upload](https://github.com/openrest
 * multipart/form-data
   * [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData)
   * [File Upload](#file-upload)
+
+[Back to TOC](#table-of-contents)
+
+Installation
+============
+
+* Download or clone this repo
+* copy or link to openresty/lualib/resty/ or to any your lua_package_path
+
+[Back to TOC](#table-of-contents)
+
+How to use
+==========
+
+```lua
+local resty_post = require 'resty.post'
+local post = resty_post:new()
+local m = post:read()
+-- return table with all form value and file
+```
 
 [Back to TOC](#table-of-contents)
 
