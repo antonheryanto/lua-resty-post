@@ -22,6 +22,7 @@ _M.VERSION = '0.1.0'
 
 local mt = { __index = _M }
 function _M.new(self, path)
+    path = path or prefix() ..'temp/' 
     return setmetatable({path = path}, mt)
 end
 
@@ -42,7 +43,7 @@ local function decode_disposition(self, data)
         return 
     end
     
-    local path = self.path or prefix() ..'temp/'
+    local path = self.path
     local tmp_name = now()
     local filename = path .. tmp_name
     local handler = open(filename, 'w+')
@@ -87,7 +88,7 @@ local function multipart(self)
             end
 
             if handler and header == 'Content-Type' then 
-                files[key].mime = data 
+                files[key].type = data 
             end
         end
 

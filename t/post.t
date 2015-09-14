@@ -64,5 +64,5 @@ value\r
 \r\n-----------------------------820127721219505131303151179--\r
 }
 --- response_body
-{"files":{"file1":{"size":12,"mime":"text\/plain","name":"a.txt"}},"test":"value\r\n"}
+{"files":{"file1":{"type":"text\/plain","size":12,"name":"a.txt"}},"test":"value\r\n"}
 --- error_log
