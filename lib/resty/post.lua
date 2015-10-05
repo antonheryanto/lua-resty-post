@@ -5,7 +5,6 @@ local upload = require "resty.upload"
 local new_tab = require "table.new"
 local open = io.open
 local sub  = string.sub
-local len = string.len
 local find = string.find
 local type = type
 local setmetatable = setmetatable
@@ -28,9 +27,9 @@ end
 
 local function decode_disposition(self, data)
     local needle = 'filename="'
-    local needle_len = len(needle)
-    local name_pos = 18 -- 'form-data; name="':len()
-    local last_quote_pos = len(data) - 1
+    local needle_len = 10 -- #needle
+    local name_pos = 18 -- #'form-data; name="'
+    local last_quote_pos = #data - 1
     local filename_pos = find(data, needle)
 
     if not filename_pos then 
