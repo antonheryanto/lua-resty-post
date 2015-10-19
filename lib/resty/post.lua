@@ -8,12 +8,13 @@ local sub  = string.sub
 local find = string.find
 local type = type
 local setmetatable = setmetatable
+local random = math.random
 local read_body = ngx.req.read_body
 local get_post_args = ngx.req.get_post_args
 local var = ngx.var
 local log = ngx.log
 local WARN = ngx.WARN
-local prefix = ngx.config.prefix
+local prefix = ngx.config.prefix()..'temp/'
 local now = ngx.now
 
 local _M = new_tab(0,3)
@@ -21,7 +22,7 @@ _M.VERSION = '0.1.0'
 
 local mt = { __index = _M }
 function _M.new(self, path)
-    path = path or prefix() ..'temp/' 
+    path = path or prefix
     return setmetatable({path = path}, mt)
 end
 
@@ -43,7 +44,7 @@ local function decode_disposition(self, data)
     end
     
     local path = self.path
-    local tmp_name = now()
+    local tmp_name = now() + random()
     local filename = path .. tmp_name
     local handler = open(filename, 'w+')
 
