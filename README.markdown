@@ -53,7 +53,7 @@ File Upload
 ===========
 
 * Support multiple file upload
-* files uploaded into temp directory (ngx.config.prefix() + 'temp' as default)
+* files uploaded into logs directory (ngx.config.prefix() + 'logs' as default)
 * files info stored in files property using field name as key
 
 
