@@ -2,7 +2,7 @@
 
 local cjson = require "cjson"
 local upload = require "resty.upload"
-local new_tab = require "table.new"
+local table_new_ok, new_tab = pcall(require, "table.new")
 local open = io.open
 local sub  = string.sub
 local find = string.find
@@ -16,6 +16,10 @@ local log = ngx.log
 local WARN = ngx.WARN
 local prefix = ngx.config.prefix()..'logs/'
 local now = ngx.now
+
+if not table_new_ok then
+    new_tab = function(narr, nrec) return {} end
+end
 
 local _M = new_tab(0,3)
 _M.VERSION = '0.1.0'
