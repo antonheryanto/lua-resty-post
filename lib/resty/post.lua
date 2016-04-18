@@ -7,6 +7,7 @@ local open = io.open
 local sub  = string.sub
 local find = string.find
 local type = type
+local tonumber = tonumber
 local setmetatable = setmetatable
 local random = math.random
 local read_body = ngx.req.read_body
@@ -22,13 +23,28 @@ if not table_new_ok then
 end
 
 local _M = new_tab(0,3)
-_M.VERSION = '0.1.0'
-
 local mt = { __index = _M }
-function _M.new(self, path)
-    path = path or prefix
-    return setmetatable({path = path}, mt)
+_M.VERSION = '0.2.0'
+
+local function tmp()
+    return now() + random()
 end
+
+local function original(name)
+    return name
+end
+
+
+function _M.new(self, opts)
+    local ot = type(opts)
+    opts = ot == 'string' and {path = opts} or ot == 'table' and opts or {}
+    opts.path = type(opts.path) == 'string' and opts.path or prefix
+    opts.chunk_size = tonumber(opts.chunk_size, 10) or 8192
+    opts.name = type(opts.name) == 'function' and opts.name or opts.no_tmp
+        and original or tmp
+    return setmetatable(opts, mt)
+end
+
 
 local function decode_disposition(self, data)
     local needle = 'filename="'
@@ -47,8 +63,9 @@ local function decode_disposition(self, data)
         return
     end
 
+    local fn = self.name
     local path = self.path
-    local tmp_name = now() + random()
+    local tmp_name = fn(name, field)
     local filename = path .. tmp_name
     local handler = open(filename, 'w+')
 
@@ -61,7 +78,7 @@ end
 
 
 local function multipart(self)
-    local chunk_size = 8192
+    local chunk_size = self.chunk_size
     local form,err = upload:new(chunk_size)
     if not form then
         log(WARN, 'failed to new upload: ', err)
@@ -142,6 +159,7 @@ local function multipart(self)
     return m
 end
 
+
 -- proses post based on content type
 function _M.read(self)
     local ctype = var.content_type
@@ -160,5 +178,5 @@ function _M.read(self)
     return get_post_args()
 end
 
-return _M
 
+return _M
