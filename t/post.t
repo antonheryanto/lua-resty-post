@@ -53,13 +53,33 @@ a=1&a=2&b=1&c=1&c=2
 {"b":"1","a":["1","2"],"c":["1","2"]}
 
 
-=== TEST 3: post with formdata file
+=== TEST 3: json
+--- http_config eval: $::HttpConfig
+--- config
+    location /t {
+      content_by_lua_block {
+        local cjson = require "cjson"
+        local post = require "resty.post":new()
+        local m = post:read()
+        ngx.say(cjson.encode(m))
+      }
+    }
+--- more_headers
+Content-Type: application/json
+--- request
+POST /t
+{"a":3,"b":4,"c":true}
+--- response_body
+{"b":4,"a":3,"c":true}
+--- error_log
+
+
+=== TEST 4: post with formdata file
 --- http_config eval: $::HttpConfig
 --- config
     location /t {
       content_by_lua_block {
         local cjson = require 'cjson'
-        local prefix = ngx.config.prefix
         local post = require 'resty.post':new()
         local m = post:read()
         m.files.file1.tmp_name = nil
@@ -81,3 +101,4 @@ value\r
 }
 --- response_body
 {"files":{"file1":{"type":"text\/plain","size":12,"name":"a.txt"}},"test":"value\r\n"}
+
