@@ -6,10 +6,12 @@ local table_new_ok, new_tab = pcall(require, "table.new")
 local open = io.open
 local sub  = string.sub
 local find = string.find
+local byte = string.byte
 local type = type
 local tonumber = tonumber
 local setmetatable = setmetatable
 local random = math.random
+local re_find = ngx.re.find
 local read_body = ngx.req.read_body
 local get_post_args = ngx.req.get_post_args
 local var = ngx.var
@@ -138,7 +140,47 @@ local function multipart(self)
 
             elseif key then
                 -- handle array input, checkboxes
-                if m[key] then
+                -- handle one dimension array input
+                -- user.name and user[name]
+                -- user[0].name and user[0][name]
+                -- TODO name[0] or [0].name
+                -- FIXME track mk
+                local from, to = re_find(key, '(\\[\\w+\\])|(\\.)','jo')
+                if from then
+                    -- check 46(.)
+                    local index = byte(key, from) == 46 and '' or
+                        sub(key, from + 1, to - 1)
+                    local name = sub(key, 0, from - 1)
+                    local field
+                    if #key == to then -- parse input[name]
+                        field = index
+                        index = ''
+                    else
+                        -- parse input[index].field or input[index][field]
+                        local ns = index == '' and 1 or 2
+                        local ne = #key
+                        if index ~= '' and byte(key, to + 1) ~= 46 then
+                            ne = ne - 1
+                        end
+                        field = sub(key, to + ns, ne)
+                        index = index == '' and index or (index + 1)
+                    end
+
+                    if type(m[name]) ~= 'table' then
+                        m[name] = {}
+                    end
+
+                    if index ~= '' and type(m[name][index]) ~= 'table' then
+                        m[name][index] = {}
+                    end
+
+                    if index ~= '' and m[name][index] then
+                        m[name][index][field] = value -- input[0].name
+                    else
+                        m[name][field] = value
+                    end
+
+                elseif m[key] then
                     local mk = m[key]
                     if type(mk) == 'table' then
                         m[key][#mk + 1] = value

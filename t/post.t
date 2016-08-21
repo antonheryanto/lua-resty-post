@@ -102,3 +102,50 @@ value\r
 --- response_body
 {"files":{"file1":{"type":"text\/plain","size":12,"name":"a.txt"}},"test":"value\r\n"}
 
+
+=== TEST 5: post with formdata array input
+--- http_config eval: $::HttpConfig
+--- config
+    location /t {
+      content_by_lua_block {
+        local cjson = require 'cjson'
+        local post = require 'resty.post':new()
+        local m = post:read()
+        m.files = nil
+        ngx.say(cjson.encode(m.user))
+        ngx.say(cjson.encode(m.friend))
+      }
+    }
+--- more_headers
+Content-Type: multipart/form-data; boundary=---------------------------820127721219505131303151179
+--- request eval
+qq{POST /t\n-----------------------------820127721219505131303151179\r
+Content-Disposition: form-data; name="user.name"\r
+\r
+Foo Bar\r
+-----------------------------820127721219505131303151179\r
+Content-Disposition: form-data; name="user[title]"\r
+\r
+Mr.\r
+-----------------------------820127721219505131303151179\r
+Content-Disposition: form-data; name="friend[0].title"\r
+\r
+Ms.\r
+-----------------------------820127721219505131303151179\r
+Content-Disposition: form-data; name="friend[0].name"\r
+\r
+Jane Doo\r
+-----------------------------820127721219505131303151179\r
+Content-Disposition: form-data; name="friend[1][title]"\r
+\r
+Mr.\r
+-----------------------------820127721219505131303151179\r
+Content-Disposition: form-data; name="friend[1].name"\r
+\r
+John Doo\r
+-----------------------------820127721219505131303151179--\r
+}
+--- response_body
+{"name":"Foo Bar","title":"Mr."}
+[{"title":"Ms.","name":"Jane Doo"},{"title":"Mr.","name":"John Doo"}]
+
