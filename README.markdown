@@ -54,8 +54,39 @@ File Upload
 ===========
 
 * Support multiple file upload
-* files uploaded into logs directory (ngx.config.prefix() + 'logs' as default)
-* files info stored in files property using field name as key
+* Files info are stored in files property using field name as key
+```lua
+ { 
+  files = {
+   file1 = { -- input name
+    name = "a.txt",
+    type = "text/plain",
+    size = 10240,
+    tmp_name = 1454551131.5459
+   },
+   file2 = {
+    name = "b.png",
+    type = "image/png",
+    size = 20480,
+    tmp_name = 1454553275.6401
+   }
+ }
+```
+
+* Define path for files upload or default to logs directory (follow ngx.config.prefix)
+* Default file will be saved to tmp name (require moving action to destination)
+``` lua
+local resty_post = require "resty.post"
+local post = resty_post:new({
+ path = "/my/path",           -- path upload file will be saved
+ chunk_size = 10240,          -- default 8192
+ no_tmp = true,               -- if set original name will uses or generate random name
+ name = function(name, field) -- overide name with user defined function
+  return name.."_"..field 
+ end
+})
+post:read()
+```
 
 
 Array Input
@@ -76,16 +107,28 @@ It is useful for thing like HTML input checkboxes or select in multiple mode
 converted into
 ``` lua
 {
- check_multi = { 1, 2 }
- select_multi = { 1, 2 }
+ check_multi = { 1, 2 },
+ select_multi = { 1, 2 } 
 }
 ```
+When checked one similar with [ngx.req.get_post_args](https://github.com/openresty/lua-nginx-module#ngxreqget_post_args)
+``` lua
+{
+ check_multi = 2,
+ select_multi = 1
+}
+```
+
 
 Support array input with name
 --------------------------------------
 This is like supporting input which mimic class and property, which can be uses to handle dynamic input
 support PHP style (dynamic language) and ASP.NET MVC binding style (static language which uses class)
 ```html
+<div class="name-index">
+ <input name="name[1]" value="Foo">
+ <input name="name[0]" value="Bar">
+</div>
 <div class="user-single">
  <input name="user.title" value="Mr.">
  <input name="user[name]" value="Foo Bar">
@@ -102,6 +145,10 @@ support PHP style (dynamic language) and ASP.NET MVC binding style (static langu
 converted into
 ```lua
 {
+ name = {
+  "Bar",
+  "Foo"
+ },
  user = {
   title = "Mr.",
   name = "Foo Bar"
