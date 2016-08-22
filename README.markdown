@@ -26,6 +26,7 @@ This library processed HTTP using [lua-resty-upload](https://github.com/openrest
 * multipart/form-data
   * [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData)
   * [File Upload](#file-upload)
+  * [Array Input](#array-input)
 
 [Back to TOC](#table-of-contents)
 
@@ -56,6 +57,67 @@ File Upload
 * files uploaded into logs directory (ngx.config.prefix() + 'logs' as default)
 * files info stored in files property using field name as key
 
+
+Array Input
+===========
+
+Support multiple input of similar name
+--------------------------------------
+It is useful for thing like HTML input checkboxes or select in multiple mode
+```html
+<input type="checkbox" name="check_multi" value="1">
+<input type="checkbox" name="check_multi" value="2">
+<select name="select_multi" multiple>
+ <option value="">Please select</option>
+ <option value="1">One</option>
+ <option value="2">Two</option>
+</select>
+```
+converted into
+``` lua
+{
+ check_multi = { 1, 2 }
+ select_multi = { 1, 2 }
+}
+```
+
+Support array input with name
+--------------------------------------
+This is like supporting input which mimic class and property, which can be uses to handle dynamic input
+support PHP style (dynamic language) and ASP.NET MVC binding style (static language which uses class)
+```html
+<div class="user-single">
+ <input name="user.title" value="Mr.">
+ <input name="user[name]" value="Foo Bar">
+</div>
+<div class="user-static">
+ <input name="users[0].title" value="Mr.">
+ <input name="users[0].name" value="John Do">
+</div>
+<div class="user-dynamic">
+ <input name="users[0][title]" value="Ms.">
+ <input name="users[0][name]" value="Jane Do">
+</div>
+```
+converted into
+```lua
+{
+ user = {
+  title = "Mr.",
+  name = "Foo Bar"
+ },
+ users = {
+  {
+   title = "Mr.",
+   name = "John Do"
+  },
+  {
+   title = "Ms.",
+   name = "Jane Do"
+  }
+ }
+}
+```
 
 [Back to TOC](#table-of-contents)
 
