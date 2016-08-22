@@ -112,6 +112,7 @@ value\r
         local post = require 'resty.post':new()
         local m = post:read()
         m.files = nil
+        ngx.say(cjson.encode(m.name))
         ngx.say(cjson.encode(m.user))
         ngx.say(cjson.encode(m.friend))
       }
@@ -120,6 +121,14 @@ value\r
 Content-Type: multipart/form-data; boundary=---------------------------820127721219505131303151179
 --- request eval
 qq{POST /t\n-----------------------------820127721219505131303151179\r
+Content-Disposition: form-data; name="name[1]"\r
+\r
+Foo\r
+-----------------------------820127721219505131303151179\r
+Content-Disposition: form-data; name="name[0]"\r
+\r
+Bar\r
+-----------------------------820127721219505131303151179\r
 Content-Disposition: form-data; name="user.name"\r
 \r
 Foo Bar\r
@@ -140,12 +149,13 @@ Content-Disposition: form-data; name="friend[1][title]"\r
 \r
 Mr.\r
 -----------------------------820127721219505131303151179\r
-Content-Disposition: form-data; name="friend[1].name"\r
+Content-Disposition: form-data; name="friend[1][name]"\r
 \r
 John Doo\r
 -----------------------------820127721219505131303151179--\r
 }
 --- response_body
+["Bar","Foo"]
 {"name":"Foo Bar","title":"Mr."}
 [{"title":"Ms.","name":"Jane Doo"},{"title":"Mr.","name":"John Doo"}]
 

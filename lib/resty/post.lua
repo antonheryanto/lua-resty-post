@@ -3,6 +3,8 @@
 local cjson = require "cjson"
 local upload = require "resty.upload"
 local table_new_ok, new_tab = pcall(require, "table.new")
+
+
 local open = io.open
 local sub  = string.sub
 local find = string.find
@@ -20,17 +22,21 @@ local WARN = ngx.WARN
 local prefix = ngx.config.prefix()..'logs/'
 local now = ngx.now
 
+
 if not table_new_ok then
     new_tab = function(narr, nrec) return {} end
 end
 
-local _M = new_tab(0,3)
+
+local _M = new_tab(0, 3)
 local mt = { __index = _M }
-_M.VERSION = '0.2.1'
+_M.VERSION = '0.2.2'
+
 
 local function tmp()
     return now() + random()
 end
+
 
 local function original(name)
     return name
@@ -81,9 +87,9 @@ end
 
 local function multipart(self)
     local chunk_size = self.chunk_size
-    local form,err = upload:new(chunk_size)
+    local form, e = upload:new(chunk_size)
     if not form then
-        log(WARN, 'failed to new upload: ', err)
+        log(WARN, 'failed to new upload: ', e)
         return
     end
 
@@ -91,10 +97,10 @@ local function multipart(self)
     local files = {}
     local handler, key, value
     while true do
-        local ctype, res, err = form:read()
+        local ctype, res, er = form:read()
 
         if not ctype then
-            log(WARN, 'failed to read: ', err)
+            log(WARN, 'failed to read: ', er)
             return
         end
 
@@ -141,9 +147,10 @@ local function multipart(self)
             elseif key then
                 -- handle array input, checkboxes
                 -- handle one dimension array input
+                -- name[0]
                 -- user.name and user[name]
                 -- user[0].name and user[0][name]
-                -- TODO name[0] or [0].name
+                -- TODO [0].name ?
                 -- FIXME track mk
                 local from, to = re_find(key, '(\\[\\w+\\])|(\\.)','jo')
                 if from then
@@ -153,7 +160,8 @@ local function multipart(self)
                     local name = sub(key, 0, from - 1)
                     local field
                     if #key == to then -- parse input[name]
-                        field = index
+                        local ix = tonumber(index, 10)
+                        field = ix and ix + 1 or index
                         index = ''
                     else
                         -- parse input[index].field or input[index][field]
