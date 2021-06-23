@@ -9,6 +9,7 @@ local open = io.open
 local sub  = string.sub
 local find = string.find
 local byte = string.byte
+local lower = string.lower
 local type = type
 local tonumber = tonumber
 local setmetatable = setmetatable
@@ -107,7 +108,7 @@ local function multipart(self)
         if ctype == 'header' then
             local header, data = res[1], res[2]
 
-            if header == 'Content-Disposition' then
+            if lower(header or '') == 'content-disposition' then
                 local tmp_name
                 key, value, handler, tmp_name = decode_disposition(self, data)
 
@@ -116,7 +117,7 @@ local function multipart(self)
                 end
             end
 
-            if handler and header == 'Content-Type' then
+            if handler and lower(header or '') == 'content-type' then
                 files[key].type = data
             end
         end
