@@ -31,7 +31,7 @@ end
 
 local _M = new_tab(0, 3)
 local mt = { __index = _M }
-_M.VERSION = '0.2.2'
+_M.VERSION = '0.2.3'
 
 
 local function tmp()
